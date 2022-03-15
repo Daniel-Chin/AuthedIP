@@ -39,6 +39,7 @@ class AuthedIpPacket(IPPacket):
         # Check RSA signature
         if not rsaVerify(
             self.timestamp + self.hash, 
+            self.signature, 
             self.rsa_public_key, 
         ):
             return False
@@ -73,6 +74,10 @@ def rsaSign(data, key):
     # The RSA signature function
     return NotImplemented(('rsaSign', data, key)) / 0
 
-def rsaVerify(data, key):
+def rsaVerify(data, signature, key):
     # The RSA signature verification function
-    return NotImplemented(('rsaVerify', data, key)) / 0
+    return NotImplemented(('rsaVerify', data, signature, key)) / 0
+
+def warn(message):
+    print(message)
+    # And also log it to a file, notify operator, etc. 

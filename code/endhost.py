@@ -20,8 +20,8 @@ class Endhost:
         packet.rsa_public_key = user.rsa_public_key
         packet.signHash(user.rsa_private_key)
         
-        ship(packet.asIPPacket())
+        self.ship(packet.asIPPacket())
 
-def ship(packet : IPPacket):
-    # Ships a packet into the net. 
-    return NotImplemented('ship', packet) / 0
+    def ship(self, packet : IPPacket):
+        # Ships a packet into the net. 
+        return NotImplemented('ship', packet) / 0
