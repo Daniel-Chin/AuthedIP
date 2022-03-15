@@ -8,6 +8,7 @@
     Literature! 
         https://www.cs.utexas.edu/icing/papers/icing-conext11.pdf
 
+Inside vs Outside
 the first authedip router: rando check. 
     Don't need to mark the packet as checked! Because the security response is off-line. It's almost-real-time policing. 
 scream for help. 

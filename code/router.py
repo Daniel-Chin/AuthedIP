@@ -80,7 +80,7 @@ class AuthedIPRouter(Router, Endhost):
             return
         
         # parse command
-        (action, verifier_ip) = socket.recv()
+        ( action, verifier_ip ) = socket.recv()
         if action == SUBSCRIBE:
             self.verifier_ip = verifier_ip
             self.last_subscribe_time = time()
