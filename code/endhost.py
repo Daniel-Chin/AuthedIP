@@ -3,12 +3,12 @@ from shared import IPPacket, AuthedIpPacket
 class User:
     def __init__(self) -> None:
         # The RSA public key is registered with the Controller. 
-        self.rsa_public_key = None
-        self.rsa_private_key = None
+        self.rsa_public_key = ...
+        self.rsa_private_key = ...
 
 class Endhost:
     def __init__(self) -> None:
-        self.ip_addr = None
+        self.ip_addr = ...
 
     def send(self, user : User, dest_addr, data):
         packet = AuthedIpPacket()

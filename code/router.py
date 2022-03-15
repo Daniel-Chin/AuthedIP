@@ -2,16 +2,14 @@ from os import urandom
 from random import random
 from time import time
 from shared import IPPacket, rsaVerify, warn
-
-CHECK_PROBABILITY = 0.1     # 10%
-SUBSCRIBE_TIMEOUT = 60 * 5  # 5 mins
-
-# constants
-SUBSCRIBE = 'SUBSCRIBE'
-UNSUBSCRIBE = 'UNSUBSCRIBE'
+from constants import (
+    CHECK_PROBABILITY, SUBSCRIBE_TIMEOUT, 
+    SUBSCRIBE, UNSUBSCRIBE, 
+)
+from endhost import Endhost, User
 
 class Router:
-    def forward(self, packet : IPPacket):
+    def forward(self, packet : IPPacket, ingress_port):
         outbound_port = self.lookup(packet.dest_addr)
         self.ship(packet, outbound_port)
     
@@ -23,28 +21,37 @@ class Router:
         # Ships a packet to an outbound port. 
         return NotImplemented('ship', packet, outbound_port) / 0
 
-class AuthedIPRouter(Router):
+class AuthedIPRouter(Router, Endhost):
     def __init__(self) -> None:
         super().__init__()
-        self.ip = None
-        self.controller_rsa_public_key = None   # pre-configured
+        self.ip = ...
+        self.controller_rsa_public_key = ...    # pre-configured
+        self.user : User = ...
+        # pre-configured. Each router needs an RSA key pair. 
 
         self.verifier_ip = None     # given by Controller
         self.last_subscribe_time = None
     
-    def forward(self, packet : IPPacket):
+    def forward(self, packet : IPPacket, ingress_port):
         # First forward everything
         super().forward(packet)
 
         # Sometimes wrap a duplicate of the packet
         # and send to verifier. 
         subscriber = self.subscriber()
-        if subscriber is not None and random() < CHECK_PROBABILITY:
-            wrapper = IPPacket()
-            wrapper.source_addr = self.ip
-            wrapper.dest_addr = subscriber
-            wrapper.payload = packet
-            super().forward(wrapper)
+        if subscriber is None:
+            return  # no verifier is subscribing
+        if not ingress_port.isFromOutside():
+            # only check packets directly from the Outside
+            return
+        if random() < CHECK_PROBABILITY:
+            self.send(
+                self.user, 
+                subscriber, 
+                ingress_port + packet,  # concat
+            )
+            # This is `Endhost` method `send`! 
+            # Which means, the wrapper is signed too. 
     
     def subscriber(self):
         if time() < self.last_subscribe_time + SUBSCRIBE_TIMEOUT:
