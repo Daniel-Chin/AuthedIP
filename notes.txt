@@ -22,3 +22,6 @@ IP protocol update that is back-compatible.
     s = sign(concat(t, h))
 
 attack: duplicate recent packets to DoS
+
+limitations
+    may need salting to prevent slow brute force of signature. Controller should declare salt of the day. 

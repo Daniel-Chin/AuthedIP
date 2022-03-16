@@ -1,4 +1,4 @@
 class AnyService:
-    def whenBeingDdosed(self):
+    def whenBeingDosed(self):
         # tell Controller about it. Raise `CHECK_PROBABILITY`.
         return NotImplemented() / 0

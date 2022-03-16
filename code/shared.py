@@ -1,4 +1,5 @@
 from time import time
+from constants import PACKET_TIMEOUT
 
 class IPPacket:
     def __init__(self) -> None:
@@ -32,6 +33,10 @@ class AuthedIpPacket(IPPacket):
         )
     
     def verify(self, known_public_keys):
+        # Check if fresh
+        if time() - self.timestamp >= PACKET_TIMEOUT:
+            return False
+        
         # Check if public key is registered
         if self.rsa_public_key not in known_public_keys:
             return False
