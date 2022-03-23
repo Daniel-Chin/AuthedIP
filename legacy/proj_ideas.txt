@@ -1,0 +1,18 @@
+probe gateway queue len using my modulation method
+    can i sync?
+    but this needs simulation...
+
+interstellar adaptive routing
+
+add trucks to the physical layer
+    doesn't really fit in
+
+BBR synchronization on the globe
+
+redstone
+
+audio links
+
+authenticated IP layer
+    inspired by ethane. 
+    why not solve the MAC spoofing? 

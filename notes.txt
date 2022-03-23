@@ -4,7 +4,7 @@
     how to do the experiment?
         I can have routers? 
     anything probablistic is unconventional in security
-    one thing I can do: analyze the attacks fro eThane
+    one thing I can do: analyze the attacks for eThane
     Literature! 
         https://www.cs.utexas.edu/icing/papers/icing-conext11.pdf
 
