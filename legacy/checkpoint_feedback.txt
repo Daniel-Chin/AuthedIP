@@ -1,0 +1,31 @@
+Icing
+
+overview
+
+threat model / protocol
+
+
+context:
+    AITF 
+        active internet traffic filtering
+    AIP
+        accountable inet protocol
+
+simplify so that
+    leave out hash
+    treat hashing as a refinement
+        hash halves traffic
+
+put signature in IP options
+    or not. AITF used beginning of IP payload. 
+
+simulate the "network" with sockets. 
+"overlay network"
+start testing soon
+measure performance
+    get benchmark of no-auth IP
+    compare with auth IP
+    compare with auth IP with hash
+    how to account for the slowness of python? 
+        proportional dilation? 
+        (but that will be so much work...)

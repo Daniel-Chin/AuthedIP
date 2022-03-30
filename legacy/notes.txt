@@ -1,0 +1,44 @@
+3/11 office hour: 
+    how to cast a packet to two dests? 
+        just copy into two packets. 
+    how to do the experiment?
+        I can have routers? 
+    anything probablistic is unconventional in security
+    one thing I can do: analyze the attacks for eThane
+    Literature! 
+        https://www.cs.utexas.edu/icing/papers/icing-conext11.pdf
+
+Inside vs Outside
+the first authedip router: rando check. 
+    Don't need to mark the packet as checked! Because the security response is off-line. It's almost-real-time policing. 
+scream for help. 
+    through Controller. 
+verification: server
+    notifies 1st authedip router. 
+    actively subscribes to 1st authedip routers, to avoid getting flooded. 
+IP protocol update that is back-compatible. 
+    h = hash(source, dest, content)
+    t = timestamp()
+    s = sign(concat(t, h))
+
+attack: duplicate recent packets to DoS
+
+limitations
+    may need salting to prevent slow brute force of signature. Controller should declare salt of the day. 
+
+simulation
+    show that the code works
+    benchmark
+        traffic volume * n_links
+            how much increase?
+        latency per packet
+            includes endhost and router computations
+        router throughput
+            no simulation for this! Just reason. 
+        traffic volume per verfier server
+            realtime verification power. 
+    DoS response
+
+Benefits
+    the blocking policy is much simpler. 
+        much easier to tell attacks from benign high-rate traffic.

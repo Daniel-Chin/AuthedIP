@@ -1,0 +1,14 @@
+aitf
+    how do the routers share info, in order to know that an attack against xxx is happening?
+    Why should the router trust the victim? 
+    many A_gw? global ddos
+
+aip
+    why self certifying needs to eliminate strucutes?
+        a stack of public keys is certifiable, as long as i have the private key to the suffix. 
+    isn't hierarchical AD a structure? 
+    How to route with scalability with flat addr?
+    why does AS need to be accountable? i thought only endhosts can be malicious. 
+    
+    my proposal: 
+        new IP addr = old IP addr _concat_ public key

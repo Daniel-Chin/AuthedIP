@@ -1,5 +1,0 @@
-icing
-
-overview
-
-threat model / protocol
