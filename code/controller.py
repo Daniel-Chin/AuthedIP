@@ -1,6 +1,6 @@
 from socket import socket
 import rsa
-from constants import *
+from shared import *
 
 class Controller:
     def __init__(self) -> None:

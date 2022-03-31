@@ -3,12 +3,12 @@ from shared import *
 from packet import *
 from user import User
 
-class Endhost:
+class NetInterface:
     def __init__(self) -> None:
         self.ip_addr = ...
 
         # represents physical link
-        self.sock : socket = ...
+        self.sock: socket = ...
 
     def send(self, dest_addr, data):
         packet = IPPacket()
@@ -17,8 +17,8 @@ class Endhost:
         packet.payload = data
         packet.send(self.sock)
 
-class AuthedIPEndhost(Endhost):
-    def send(self, dest_addr, data, user : User):
+class AuthedIPNetInterface(NetInterface):
+    def send(self, dest_addr, data, user: User):
         packet = AuthedIpPacket()
         packet.source_addr = self.ip_addr
         packet.  dest_addr = dest_addr

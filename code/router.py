@@ -5,13 +5,12 @@ from time import time
 from socket import socket
 from select import select
 from shared import *
-from constants import *
 from packet import *
 
 class Port:
     def __init__(self) -> None:
         self.id = None
-        self.sock : socket = None
+        self.sock: socket = None
         # which side is the peer on?
         self.side = None    # INSIDE | OUTSIDE
 
@@ -19,7 +18,7 @@ class Router(LoopThread):
     def __init__(self) -> None:
         super().__init__()
 
-        self.ports : List[Port] = []
+        self.ports: List[Port] = []
         self.table = {}
     
     def fillPortIds(self):
@@ -31,7 +30,7 @@ class Router(LoopThread):
         return [x.sock for x in self.ports]
     
     @lru_cache()
-    def sock2Port(self, sock : socket):
+    def sock2Port(self, sock: socket):
         for port in self.ports:
             if port.sock is sock:
                 return port
@@ -41,13 +40,13 @@ class Router(LoopThread):
             self.allSocks(), [], [], SHUTDOWN_TIME, 
         )
         for s in r_ready:
-            s : socket
+            s: socket
             in_port = self.sock2Port(s)
             packet = IPPacket()
             packet.parse(s)
             self.forward(packet, in_port)
 
-    def forward(self, packet : IPPacket, in_port : Port):
+    def forward(self, packet: IPPacket, in_port: Port):
         out_port = self.table[packet.dest_addr]
         packet.send(out_port.sock)
         return out_port
@@ -55,9 +54,9 @@ class Router(LoopThread):
 class AuthedIPRouter(Router):
     def __init__(self) -> None:
         super().__init__()
-        self.ip_addr : Addr = ...
-        self.controller_ip : Addr = ...    # pre-configured
-        self.verifier_ip : Addr = None     
+        self.ip_addr: Addr = ...
+        self.controller_ip: Addr = ...    # pre-configured
+        self.verifier_ip: Addr = None     
         # `verifier_ip` should be given by Controller; 
         # but in this simulation, it's pre-configured. 
         self.port_sus = [0] * 99    # port.id -> sus
@@ -69,7 +68,7 @@ class AuthedIPRouter(Router):
     def noLeak(self, sus):
         return sus >= 4
 
-    def forward(self, packet : IPPacket, in_port : Port):
+    def forward(self, packet: IPPacket, in_port: Port):
         if packet.dest_addr == self.ip_addr:
             # it's for me! 
             if in_port.side == INSIDE:
@@ -96,7 +95,7 @@ class AuthedIPRouter(Router):
                         duPa.forward_this = True
                     super().forward(duPa.asIPPacket(), None)
     
-    def readAlert(self, packet : IPPacket):
+    def readAlert(self, packet: IPPacket):
         alPa = AlertPacket().fromIPPacket(packet)
         addr, port_id = alPa.ingress_info
         assert addr == self.ip_addr

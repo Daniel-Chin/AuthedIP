@@ -1,6 +1,8 @@
 ENDIAN = 'big'
 
+import os
 from threading import Thread
+from constants import *
 
 class Addr:
     def __init__(self, addr_bytes = None) -> None:
@@ -8,6 +10,10 @@ class Addr:
     
     def __repr__(self):
         return '.'.join([str(x) for x in self.bytes])
+    
+    def random(self):
+        self.bytes = os.urandom(4)
+        return self
 
 def warn(message):
     print('WARNING:', message)

@@ -2,18 +2,17 @@ from functools import lru_cache
 from typing import Tuple
 from time import time
 import rsa
-from constants import *
 from shared import *
 
 class BasePacket:
     def __init__(self) -> None:
-        self.source_addr : Addr = None
-        self.  dest_addr : Addr = None
+        self.source_addr: Addr = None
+        self.  dest_addr: Addr = None
 
 class IPPacket(BasePacket):
     def __init__(self) -> None:
         super().__init__()
-        self.payload : bytes = None
+        self.payload: bytes = None
 
         self.buffer = []
     
@@ -62,10 +61,10 @@ class AuthedIpPacket(BasePacket):
         super().__init__()
 
         # AuthedIp
-        self.content : bytes = None
-        self.timestamp : int = round(time())
-        self.rsa_public_key_id : bytes = None
-        self.signature : bytes = None
+        self.content: bytes = None
+        self.timestamp: int = round(time())
+        self.rsa_public_key_id: bytes = None
+        self.signature: bytes = None
     
     def timestampBytes(self):
         return self.timestamp.to_bytes(TIMESTAMP_LEN, ENDIAN)
@@ -120,7 +119,7 @@ class AuthedIpPacket(BasePacket):
         )
         return p
     
-    def fromIPPacket(self, packet : IPPacket):
+    def fromIPPacket(self, packet: IPPacket):
         self.source_addr = packet.source_addr
         self.  dest_addr = packet.  dest_addr
         acc = 0
@@ -142,10 +141,10 @@ class AuthedIpPacket(BasePacket):
 class DuplicatedPacket(BasePacket):
     def __init__(self) -> None:
         super().__init__()
-        self.ingress_info : Tuple[Addr, int] = None     
+        self.ingress_info: Tuple[Addr, int] = None     
         self.forward_this = b'0'    # b'0' | b'1'
         # (addr, port.id)
-        self.content : bytes = None
+        self.content: bytes = None
 
     def ingressInfoBytes(self):
         addr , port_id = self.ingress_info
@@ -165,7 +164,7 @@ class DuplicatedPacket(BasePacket):
         )
         return p
 
-    def fromIPPacket(self, packet : IPPacket):
+    def fromIPPacket(self, packet: IPPacket):
         self.source_addr = packet.source_addr
         self.  dest_addr = packet.  dest_addr
         acc = 0
