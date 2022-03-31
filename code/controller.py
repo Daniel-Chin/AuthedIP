@@ -1,5 +1,7 @@
 from socket import socket
+
 import rsa
+
 from shared import *
 
 class Controller:
@@ -9,6 +11,7 @@ class Controller:
 
         self.known_public_keys = ...    
         # contains all valid public keys in the enterprise. 
+        self.side = INSIDE
     
     def relaySubscription(
         self, action, verifier_ip, router_ip, 

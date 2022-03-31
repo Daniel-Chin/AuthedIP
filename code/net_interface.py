@@ -1,7 +1,8 @@
 from socket import socket
+
 from shared import *
 from packet import *
-from user import User
+from user import *
 
 class NetInterface:
     def __init__(self) -> None:
@@ -18,6 +19,11 @@ class NetInterface:
         packet.send(self.sock)
 
 class AuthedIPNetInterface(NetInterface):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.side = None    # INSIDE | OUTSIDE
+
     def send(self, dest_addr, data, user: User):
         packet = AuthedIpPacket()
         packet.source_addr = self.ip_addr

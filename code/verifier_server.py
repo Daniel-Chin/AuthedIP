@@ -1,5 +1,6 @@
 from socket import socket
 from select import select
+
 from shared import *
 from packet import *
 
@@ -11,6 +12,7 @@ class VerifierServer(LoopThread):
         self.known_public_keys = None
         # represents physical link
         self.sock: socket = ...
+        self.side = INSIDE
     
     def acquireKnownPublicKeys(self, pre_configured):
         # verifier is supposed to ask controller for this. 

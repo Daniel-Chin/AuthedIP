@@ -4,6 +4,7 @@ from random import random
 from time import time
 from socket import socket
 from select import select
+
 from shared import *
 from packet import *
 
@@ -13,6 +14,8 @@ class Port:
         self.sock: socket = None
         # which side is the peer on?
         self.side = None    # INSIDE | OUTSIDE
+        # demo-only
+        self.peer = ...
 
 class Router(LoopThread):
     def __init__(self) -> None:
@@ -61,6 +64,7 @@ class AuthedIPRouter(Router):
         # but in this simulation, it's pre-configured. 
         self.port_sus = [0] * 99    # port.id -> sus
         self.last_time = time()
+        self.side = None    # INSIDE | OUTSIDE
     
     def checkProbability(self, sus):
         return BASE_CHECK_PROBABILITY * (1 + sus * .1)
