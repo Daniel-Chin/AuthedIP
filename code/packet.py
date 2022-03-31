@@ -37,7 +37,7 @@ class IPPacket(BasePacket):
         # payload
         io.send(self.payload)
     
-    def recvAll(self, sock, size):
+    def recvall(self, sock, size):
         data = recvall(sock, size)
         self.buffer.append(data)
         return data

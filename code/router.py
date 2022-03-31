@@ -50,7 +50,7 @@ class Router(LoopThread):
             self.forward(packet, in_port)
 
     def forward(self, packet: IPPacket, in_port: Port):
-        out_port = self.table[packet.dest_addr]
+        out_port = self.table[packet.dest_addr.bytes]
         packet.send(out_port.sock)
         return out_port
 

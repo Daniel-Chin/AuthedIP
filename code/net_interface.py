@@ -17,6 +17,9 @@ class NetInterface:
         packet.  dest_addr = dest_addr
         packet.payload = data
         packet.send(self.sock)
+    
+    def __repr__(self):
+        return f'<NIC {self.ip_addr}>'
 
 class AuthedIPNetInterface(NetInterface):
     def __init__(self) -> None:

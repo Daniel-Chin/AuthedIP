@@ -10,7 +10,7 @@ class Addr:
         self.bytes = addr_bytes
     
     def __repr__(self):
-        return '.'.join([str(x) for x in self.bytes])
+        return '.'.join([format(x, '3') for x in self.bytes])
     
     def random(self):
         self.bytes = os.urandom(4)
