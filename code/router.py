@@ -50,36 +50,39 @@ class Router(Thread):
                 in_port = self.sock2Port(s)
                 packet = IPPacket()
                 packet.parse(s)
-                out_port = self.table[packet.dest_addr]
-                self.forward(packet, in_port, out_port)
+                self.forward(packet, in_port)
         print('router thread shutdown.')
     
-    def forward(
-        self, packet : IPPacket, 
-        in_port : Port, out_port : Port, 
-    ):
+    def forward(self, packet : IPPacket, in_port : Port):
+        out_port = self.table[packet.dest_addr]
         packet.send(out_port.sock)
+        return out_port
 
 class AuthedIPRouter(Router):
     def __init__(self) -> None:
         super().__init__()
-        self.controller_ip = ...    # pre-configured
-        self.verifier_ip = None     # given by Controller
+        self.ip_addr : Addr = ...
+        self.controller_ip : Addr = ...    # pre-configured
+        self.verifier_ip : Addr = None     # given by Controller
     
-    def forward(
-        self, packet : IPPacket, 
-        in_port : Port, out_port : Port, 
-    ):
+    def forward(self, packet : IPPacket, in_port : Port):
         # First forward everything
-        super().forward(packet, in_port, out_port)
+        if packet.dest_addr == self.ip_addr:
+            # it's for me! 
+            self.readAlert(packet)
+        else:
+            out_port = super().forward(packet, in_port)
 
         # Sometimes wrap a duplicate of the packet
         # and send to verifier. 
         if in_port.side == OUTSIDE and out_port.side == INSIDE:
             if random() < CHECK_PROBABILITY:
-                verifier_ip
-                self.send(
-                    self.user, 
-                    subscriber, 
-                    ingress_port + packet,  # concat
-                )
+                duPa = DuplicatedPacket()
+                duPa.content = packet.bytes()
+                duPa.source_addr = self.ip_addr
+                duPa.  dest_addr = self.verifier_ip
+                duPa.ingress_info = (self.ip_addr, in_port.id)
+                super().forward(duPa, None)
+    
+    def readAlert(self, packet : IPPacket):
+        ...

@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Tuple
 from time import time
 import rsa
@@ -12,6 +13,8 @@ class IPPacket:
         self.source_addr : Addr = None
         self.dest_addr : Addr = None
         self.payload : bytes = None
+
+        self.buffer = []
     
     def send(self, io):
         # version, IHL
@@ -32,16 +35,25 @@ class IPPacket:
         # payload
         io.send(self.payload)
     
+    def recvAll(self, sock, size):
+        data = recvall(sock, size)
+        self.buffer.append(data)
+        return data
+
     def parse(self, io):
-        recvall(io, 2)
+        self.recvall(io, 2)
         payload_len = int.from_bytes(
-            recvall(io, 2), ENDIAN, 
+            self.recvall(io, 2), ENDIAN, 
         ) - HEADER_LEN
-        recvall(io, 8)
-        self.source_addr = Addr(recvall(io, 4))
-        self.  dest_addr = Addr(recvall(io, 4))
-        self.payload = recvall(io, payload_len)
+        self.recvall(io, 8)
+        self.source_addr = Addr(self.recvall(io, 4))
+        self.  dest_addr = Addr(self.recvall(io, 4))
+        self.payload = self.recvall(io, payload_len)
         return payload_len
+    
+    @lru_cache(1)
+    def bytes(self):
+        return b''.join(self.buffer)
 
 class AuthedIpPacket(IPPacket):
     def __init__(self) -> None:
@@ -53,19 +65,9 @@ class AuthedIpPacket(IPPacket):
         self.timestamp : int = round(time())
         self.rsa_public_key_id : bytes = None
         self.signature : bytes = None
-
-        self.ingress_info = None     # (addr, port.id)
     
     def timestampBytes(self):
         return self.timestamp.to_bytes(TIMESTAMP_LEN, ENDIAN)
-
-    def ingressInfoBytes(self):
-        addr , port_id = self.ingress_info
-        addr : Addr
-        return (
-            addr.bytes + 
-            port_id.to_bytes(PORT_ID_LEN, ENDIAN)
-        )
 
     def identity(self):
         return (
@@ -113,7 +115,6 @@ class AuthedIpPacket(IPPacket):
             self.timestampBytes() + 
             self.rsa_public_key_id + 
             self.signature + 
-            self.ingressInfoBytes() + 
             self.content
         )
         return p
@@ -134,6 +135,34 @@ class AuthedIpPacket(IPPacket):
             acc:acc+SIGNATURE_LEN
         ]
         acc += SIGNATURE_LEN
+        self.content = packet.payload[acc:]
+
+class DuplicatedPacket(IPPacket):
+    def __init__(self) -> None:
+        # Keeps everything from IP
+        super().__init__()
+        self.ingress_info : Tuple[Addr, int] = None     
+        # (addr, port.id)
+        self.content : bytes = None
+
+    def ingressInfoBytes(self):
+        addr , port_id = self.ingress_info
+        return (
+            addr.bytes + 
+            port_id.to_bytes(PORT_ID_LEN, ENDIAN)
+        )
+
+    def asIPPacket(self):
+        p = IPPacket()
+        p.source_addr = self.source_addr
+        p.dest_addr   = self.dest_addr
+        p.payload = self.ingressInfoBytes() + self.content
+        return p
+
+    def fromIPPacket(self, packet : IPPacket):
+        self.source_addr = packet.source_addr
+        self.  dest_addr = packet.  dest_addr
+        acc = 0
         addr, port_id_enc = packet.payload[
             acc:acc+INGRESS_INFO_LEN
         ]
