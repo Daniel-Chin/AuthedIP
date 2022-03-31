@@ -65,8 +65,6 @@ class AuthedIPRouter(Router):
         super().__init__()
         self.controller_ip = ...    # pre-configured
         self.verifier_ip = None     # given by Controller
-        self.last_subscribe_time = None
-        self.magic_link_with_v = ...
     
     def forward(
         self, packet : IPPacket, 
@@ -77,50 +75,11 @@ class AuthedIPRouter(Router):
 
         # Sometimes wrap a duplicate of the packet
         # and send to verifier. 
-        subscriber = self.subscriber()
-        if subscriber is None:
-            return  # no verifier is subscribing
         if in_port.side == OUTSIDE and out_port.side == INSIDE:
             if random() < CHECK_PROBABILITY:
-                
+                verifier_ip
                 self.send(
                     self.user, 
                     subscriber, 
                     ingress_port + packet,  # concat
                 )
-    
-    def subscriber(self):
-        if time() < self.last_subscribe_time + SUBSCRIBE_TIMEOUT:
-            return self.verifier_ip
-        else:
-            return None
-
-    def onAcceptTCP(self, socket):
-        # Each AuthedIP router listens for TCP connections. 
-        # Controller gives the router a TCP call to update
-        # verifier subscription. 
-
-        # Controller authenticates
-        noise = urandom(HASH_LEN)
-        socket.send(noise)
-        signed_noise = socket.recv(SIGNATURE_LEN)
-        if not rsa.verify(
-            noise, signed_noise, 
-            self.controller_rsa_public_key, 
-        ):
-            warn(
-                'TCP connection from ... failed to '
-                'authenticate as Controller. '
-            )
-            socket.close()
-            return
-        
-        # parse command
-        ( action, verifier_ip ) = socket.recv()
-        if action == SUBSCRIBE:
-            self.verifier_ip = verifier_ip
-            self.last_subscribe_time = time()
-        elif action == UNSUBSCRIBE:
-            self.verifier_ip = None
-        socket.send(b'ok')
-        socket.close()
