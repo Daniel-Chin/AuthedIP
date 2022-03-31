@@ -8,10 +8,14 @@ from shared import *
 ENDIAN = 'big'
 HEADER_LEN = 20
 
-class IPPacket:
+class BasePacket:
     def __init__(self) -> None:
         self.source_addr : Addr = None
-        self.dest_addr : Addr = None
+        self.  dest_addr : Addr = None
+
+class IPPacket(BasePacket):
+    def __init__(self) -> None:
+        super().__init__()
         self.payload : bytes = None
 
         self.buffer = []
@@ -55,9 +59,8 @@ class IPPacket:
     def bytes(self):
         return b''.join(self.buffer)
 
-class AuthedIpPacket(IPPacket):
+class AuthedIpPacket(BasePacket):
     def __init__(self) -> None:
-        # Keeps everything from IP
         super().__init__()
 
         # AuthedIp
@@ -137,11 +140,11 @@ class AuthedIpPacket(IPPacket):
         acc += SIGNATURE_LEN
         self.content = packet.payload[acc:]
 
-class DuplicatedPacket(IPPacket):
+class DuplicatedPacket(BasePacket):
     def __init__(self) -> None:
-        # Keeps everything from IP
         super().__init__()
         self.ingress_info : Tuple[Addr, int] = None     
+        self.forward_this = b'0'    # b'0' | b'1'
         # (addr, port.id)
         self.content : bytes = None
 
@@ -156,7 +159,11 @@ class DuplicatedPacket(IPPacket):
         p = IPPacket()
         p.source_addr = self.source_addr
         p.dest_addr   = self.dest_addr
-        p.payload = self.ingressInfoBytes() + self.content
+        p.payload = (
+            self.ingressInfoBytes() + 
+            self.forward_this + 
+            self.content
+        )
         return p
 
     def fromIPPacket(self, packet : IPPacket):
@@ -170,4 +177,13 @@ class DuplicatedPacket(IPPacket):
             addr, int.from_bytes(port_id_enc, ENDIAN), 
         )
         acc += INGRESS_INFO_LEN
+        self.forward_this = packet.payload[
+            acc:acc+1
+        ]
+        acc += 1
         self.content = packet.payload[acc:]
+
+class AlertPacket(DuplicatedPacket):
+    def __init__(self) -> None:
+        super().__init__()
+        self.content = b''

@@ -2,7 +2,9 @@ subscription
   duplicating has a rate limit specified during subscription
   router drops packets, looking like congestion for the hosts.
 
-alarm should gradually raise the check probability. 
+alert 
+  should gradually raise the check probability. 
+  at some point, becomes verify-then-forward. 
 
 no more content verification
   since we only defend against dos. 
