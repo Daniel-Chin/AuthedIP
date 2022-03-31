@@ -1,3 +1,10 @@
+class Addr:
+    def __init__(self, addr_bytes = None) -> None:
+        self.bytes = addr_bytes
+    
+    def __repr__(self):
+        return '.'.join([str(x) for x in self.bytes])
+
 def warn(message):
     print(message)
     # And also log it to a file, notify operator, etc. 

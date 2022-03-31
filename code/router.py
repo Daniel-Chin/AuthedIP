@@ -14,6 +14,7 @@ from endhost import Endhost, User
 
 class Port:
     def __init__(self) -> None:
+        self.id = None
         self.sock : socket = None
         # which side is the peer on?
         self.side = None    # INSIDE | OUTSIDE
@@ -24,6 +25,10 @@ class Router(Thread):
         self.ports : List[Port] = []
         self.table = {}
         self.go_on = True
+    
+    def fillPortIds(self):
+        for i, port in enumerate(self.ports):
+            port.id = i
 
     @lru_cache(1)
     def allSocks(self):
@@ -55,15 +60,13 @@ class Router(Thread):
     ):
         packet.send(out_port.sock)
 
-class AuthedIPRouter(Router, Endhost):
+class AuthedIPRouter(Router):
     def __init__(self) -> None:
         super().__init__()
-        self.controller_rsa_public_key = ...    # pre-configured
-        self.user : User = ...
-        # pre-configured. Each router needs an RSA key pair. 
-
+        self.controller_ip = ...    # pre-configured
         self.verifier_ip = None     # given by Controller
         self.last_subscribe_time = None
+        self.magic_link_with_v = ...
     
     def forward(
         self, packet : IPPacket, 
@@ -77,17 +80,14 @@ class AuthedIPRouter(Router, Endhost):
         subscriber = self.subscriber()
         if subscriber is None:
             return  # no verifier is subscribing
-        if not ingress_port.isFromOutside():
-            # only check packets directly from the Outside
-            return
-        if random() < CHECK_PROBABILITY:
-            self.send(
-                self.user, 
-                subscriber, 
-                ingress_port + packet,  # concat
-            )
-            # This is `Endhost` method `send`! 
-            # Which means, the wrapper is signed too. 
+        if in_port.side == OUTSIDE and out_port.side == INSIDE:
+            if random() < CHECK_PROBABILITY:
+                
+                self.send(
+                    self.user, 
+                    subscriber, 
+                    ingress_port + packet,  # concat
+                )
     
     def subscriber(self):
         if time() < self.last_subscribe_time + SUBSCRIBE_TIMEOUT:

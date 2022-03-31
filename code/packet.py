@@ -1,3 +1,4 @@
+from typing import Tuple
 from time import time
 import rsa
 from constants import *
@@ -5,13 +6,6 @@ from shared import *
 
 ENDIAN = 'big'
 HEADER_LEN = 20
-
-class Addr:
-    def __init__(self, addr_bytes = None) -> None:
-        self.bytes = addr_bytes
-    
-    def __repr__(self):
-        return '.'.join([str(x) for x in self.bytes])
 
 class IPPacket:
     def __init__(self) -> None:
@@ -55,13 +49,23 @@ class AuthedIpPacket(IPPacket):
         super().__init__()
 
         # AuthedIp
-        self.content = None
-        self.timestamp = round(time())
-        self.rsa_public_key_id = None
-        self.signature = None
+        self.content : bytes = None
+        self.timestamp : int = round(time())
+        self.rsa_public_key_id : bytes = None
+        self.signature : bytes = None
+
+        self.ingress_info = None     # (addr, port.id)
     
     def timestampBytes(self):
         return self.timestamp.to_bytes(TIMESTAMP_LEN, ENDIAN)
+
+    def ingressInfoBytes(self):
+        addr , port_id = self.ingress_info
+        addr : Addr
+        return (
+            addr.bytes + 
+            port_id.to_bytes(PORT_ID_LEN, ENDIAN)
+        )
 
     def identity(self):
         return (
@@ -106,9 +110,10 @@ class AuthedIpPacket(IPPacket):
         # The timestamp, key_id, and the signature are embedded
         # within the payload of the IP packet. 
         p.payload = (   # Concatenation of four things
-            self.timestamp + 
+            self.timestampBytes() + 
             self.rsa_public_key_id + 
             self.signature + 
+            self.ingressInfoBytes() + 
             self.content
         )
         return p
@@ -117,9 +122,9 @@ class AuthedIpPacket(IPPacket):
         self.source_addr = packet.source_addr
         self.  dest_addr = packet.  dest_addr
         acc = 0
-        self.timestamp = packet.payload[
+        self.timestamp = int.from_bytes(packet.payload[
             acc:acc+TIMESTAMP_LEN
-        ]
+        ], ENDIAN)
         acc += TIMESTAMP_LEN
         self.rsa_public_key_id = packet.payload[
             acc:acc+RSA_KEY_ID_BITS
@@ -129,4 +134,11 @@ class AuthedIpPacket(IPPacket):
             acc:acc+SIGNATURE_LEN
         ]
         acc += SIGNATURE_LEN
+        addr, port_id_enc = packet.payload[
+            acc:acc+INGRESS_INFO_LEN
+        ]
+        self.ingress_info = (
+            addr, int.from_bytes(port_id_enc, ENDIAN), 
+        )
+        acc += INGRESS_INFO_LEN
         self.content = packet.payload[acc:]

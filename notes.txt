@@ -13,6 +13,8 @@ simulation
     
     Network topology is 1D for each case. 
     Use IP over socket. 
+    subscription is not simulated. 
+    router and verifier has magical direct links, for simplification. 
 
 paper
     Benefits
