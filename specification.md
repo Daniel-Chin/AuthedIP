@@ -22,5 +22,5 @@ limitations
       send fake alerts to routers. 
 
 registration
-  RSA full key is 512 bits. Too long for every packet, so in the packet we only put the 8-byte suffix. This allows 256^8=1e+19 different accounts in the enterprise. 
+  RSA full key is 512 bits. Too long for every packet, so in the packet we only put an 8-byte hash. This allows 256^8=1e+19 different accounts in the enterprise. 
   Generation of keys uses rejection sampling. 

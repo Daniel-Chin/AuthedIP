@@ -5,9 +5,6 @@ import rsa
 from constants import *
 from shared import *
 
-ENDIAN = 'big'
-HEADER_LEN = 20
-
 class BasePacket:
     def __init__(self) -> None:
         self.source_addr : Addr = None
@@ -26,7 +23,7 @@ class IPPacket(BasePacket):
         # DSCP, ECN
         io.send(b'\x00')
         # Total len
-        io.send((HEADER_LEN + len(self.payload)).to_bytes(2, ENDIAN))
+        io.send((IP_HEADERS_LEN + len(self.payload)).to_bytes(2, ENDIAN))
         # identification, flags, frag offset
         io.send(b'\x00\x00\x00\x00')
         # TTL, protocol, header checksum
@@ -48,7 +45,7 @@ class IPPacket(BasePacket):
         self.recvall(io, 2)
         payload_len = int.from_bytes(
             self.recvall(io, 2), ENDIAN, 
-        ) - HEADER_LEN
+        ) - IP_HEADERS_LEN
         self.recvall(io, 8)
         self.source_addr = Addr(self.recvall(io, 4))
         self.  dest_addr = Addr(self.recvall(io, 4))

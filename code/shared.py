@@ -1,3 +1,5 @@
+ENDIAN = 'big'
+
 class Addr:
     def __init__(self, addr_bytes = None) -> None:
         self.bytes = addr_bytes

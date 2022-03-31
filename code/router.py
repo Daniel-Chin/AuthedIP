@@ -1,4 +1,3 @@
-from os import urandom
 from typing import List
 from functools import lru_cache
 from threading import Thread
@@ -6,11 +5,9 @@ from random import random
 from time import time
 from socket import socket
 from select import select
-import rsa
 from shared import *
 from constants import *
 from packet import *
-from endhost import Endhost, User
 
 class Port:
     def __init__(self) -> None:
