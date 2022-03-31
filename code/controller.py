@@ -1,5 +1,6 @@
 from socket import socket
-from shared import rsaSign
+import rsa
+from constants import *
 
 class Controller:
     def __init__(self) -> None:
@@ -16,8 +17,10 @@ class Controller:
         s.connect((router_ip, 2333))
 
         # authenticate
-        noise = s.recv(256)
-        signed_noise = rsaSign(noise, self.rsa_private_key)
+        noise = s.recv(HASH_LEN)
+        signed_noise = rsa.sign_hash(
+            noise, self.rsa_private_key, HASH_METHOD, 
+        )
         s.send(signed_noise)
 
         # relay command

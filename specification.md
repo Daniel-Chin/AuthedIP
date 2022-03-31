@@ -14,3 +14,7 @@ scream for help
 
 limitations
   may need salting to prevent slow brute force of signature. Controller should declare salt of the day. 
+
+registration
+  RSA full key is 512 bits. Too long for every packet, so in the packet we only put the 8-byte suffix. This allows 256^8=1e+19 different accounts in the enterprise. 
+  Generation of keys uses rejection sampling. 

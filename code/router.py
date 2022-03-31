@@ -1,30 +1,63 @@
 from os import urandom
+from typing import List
+from functools import lru_cache
+from threading import Thread
 from random import random
 from time import time
-from shared import IPPacket, rsaVerify, warn
-from constants import (
-    CHECK_PROBABILITY, SUBSCRIBE_TIMEOUT, 
-    SUBSCRIBE, UNSUBSCRIBE, 
-)
+from socket import socket
+from select import select
+import rsa
+from shared import *
+from constants import *
+from packet import *
 from endhost import Endhost, User
 
-class Router:
-    def forward(self, packet : IPPacket, ingress_port):
-        outbound_port = self.lookup(packet.dest_addr)
-        self.ship(packet, outbound_port)
-    
-    def lookup(ip_addr):
-        # Just regular lookup table. 
-        return NotImplemented('lookup', ip_addr) / 0
+class Port:
+    def __init__(self) -> None:
+        self.sock : socket = None
+        # which side is the peer on?
+        self.side = None    # INSIDE | OUTSIDE
 
-    def ship(self, packet : IPPacket, outbound_port):
-        # Ships a packet to an outbound port. 
-        return NotImplemented('ship', packet, outbound_port) / 0
+class Router(Thread):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ports : List[Port] = []
+        self.table = {}
+        self.go_on = True
+
+    @lru_cache(1)
+    def allSocks(self):
+        return [x.sock for x in self.ports]
+    
+    @lru_cache()
+    def sock2Port(self, sock : socket):
+        for port in self.ports:
+            if port.sock is sock:
+                return port
+    
+    def run(self):
+        while self.go_on:
+            r_ready, _, _ = select(
+                self.allSocks(), [], [], SHUTDOWN_TIME, 
+            )
+            for s in r_ready:
+                s : socket
+                in_port = self.sock2Port(s)
+                packet = IPPacket()
+                packet.parse(s)
+                out_port = self.table[packet.dest_addr]
+                self.forward(packet, in_port, out_port)
+        print('router thread shutdown.')
+    
+    def forward(
+        self, packet : IPPacket, 
+        in_port : Port, out_port : Port, 
+    ):
+        packet.send(out_port.sock)
 
 class AuthedIPRouter(Router, Endhost):
     def __init__(self) -> None:
         super().__init__()
-        self.ip = ...
         self.controller_rsa_public_key = ...    # pre-configured
         self.user : User = ...
         # pre-configured. Each router needs an RSA key pair. 
@@ -32,9 +65,12 @@ class AuthedIPRouter(Router, Endhost):
         self.verifier_ip = None     # given by Controller
         self.last_subscribe_time = None
     
-    def forward(self, packet : IPPacket, ingress_port):
+    def forward(
+        self, packet : IPPacket, 
+        in_port : Port, out_port : Port, 
+    ):
         # First forward everything
-        super().forward(packet)
+        super().forward(packet, in_port, out_port)
 
         # Sometimes wrap a duplicate of the packet
         # and send to verifier. 
@@ -65,10 +101,10 @@ class AuthedIPRouter(Router, Endhost):
         # verifier subscription. 
 
         # Controller authenticates
-        noise = urandom(256)
+        noise = urandom(HASH_LEN)
         socket.send(noise)
-        signed_noise = socket.recv(256)
-        if not rsaVerify(
+        signed_noise = socket.recv(SIGNATURE_LEN)
+        if not rsa.verify(
             noise, signed_noise, 
             self.controller_rsa_public_key, 
         ):

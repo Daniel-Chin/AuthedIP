@@ -1,88 +1,22 @@
-from time import time
-from constants import PACKET_TIMEOUT
-
-class IPPacket:
-    def __init__(self) -> None:
-        self.source_addr = None
-        self.dest_addr = None
-        self.payload = None
-
-class AuthedIpPacket(IPPacket):
-    def __init__(self) -> None:
-        # Keeps everything from IP
-        super().__init__()
-
-        # AuthedIp
-        self.content = None
-        self.timestamp = str(time())
-        self.hash = None
-        self.rsa_public_key = None
-        self.signature = None
-    
-    def hashContent(self):
-        self.hash = str(hash((
-            self.source_addr, 
-            self.dest_addr, 
-            self.content, 
-        )))
-    
-    def signHash(self, rsa_private_key):
-        self.signature = rsaSign(
-            self.timestamp + self.hash, 
-            rsa_private_key, 
-        )
-    
-    def verify(self, known_public_keys):
-        # Check if fresh
-        if time() - self.timestamp >= PACKET_TIMEOUT:
-            return False
-        
-        # Check if public key is registered
-        if self.rsa_public_key not in known_public_keys:
-            return False
-
-        # Check RSA signature
-        if not rsaVerify(
-            self.timestamp + self.hash, 
-            self.signature, 
-            self.rsa_public_key, 
-        ):
-            return False
-        
-        # Check the hash
-        if self.hash != str(hash((
-            self.source_addr, 
-            self.dest_addr, 
-            self.content, 
-        ))):
-            return False
-        
-        # All OK
-        return True
-    
-    def asIPPacket(self):
-        p = IPPacket()
-        p.source_addr = self.source_addr
-        p.dest_addr   = self.dest_addr
-        # The timestamp, hash, and the signature are embedded
-        # within the payload of the IP packet. 
-        p.payload = (   # Concatenation of four things
-            self.timestamp + 
-            self.hash + 
-            self.rsa_public_key + 
-            self.signature + 
-            self.content
-        )
-        return p
-
-def rsaSign(data, key):
-    # The RSA signature function
-    return NotImplemented(('rsaSign', data, key)) / 0
-
-def rsaVerify(data, signature, key):
-    # The RSA signature verification function
-    return NotImplemented(('rsaVerify', data, signature, key)) / 0
-
 def warn(message):
     print(message)
     # And also log it to a file, notify operator, etc. 
+
+def recvall(s, size, use_list = True):
+    '''
+    Receive `size` bytes from socket `s`. Blocks until gets all. 
+    Somehow doesn't handle socket closing. 
+    I will fix that when I have time. 
+    '''
+    if use_list:
+        left = size
+        buffer = []
+        while left > 0:
+            buffer.append(s.recv(left))
+            left -= len(buffer[-1])
+        recved = b''.join(buffer)
+    else:
+        recved = b''
+        while len(recved) < size:
+            recved += s.recv(left)
+    return recved
