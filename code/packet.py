@@ -41,7 +41,7 @@ class IPPacket(BasePacket):
         self.buffer.append(data)
         return data
 
-    def parse(self, io):
+    def parse(self, io, stop_before_payload = False):
         self.recvall(io, 2)
         payload_len = int.from_bytes(
             self.recvall(io, 2), ENDIAN, 
@@ -49,7 +49,8 @@ class IPPacket(BasePacket):
         self.recvall(io, 8)
         self.source_addr = Addr(self.recvall(io, 4))
         self.  dest_addr = Addr(self.recvall(io, 4))
-        self.payload = self.recvall(io, payload_len)
+        if not stop_before_payload:
+            self.payload = self.recvall(io, payload_len)
         return payload_len
     
     @lru_cache(1)
@@ -136,6 +137,7 @@ class AuthedIpPacket(BasePacket):
         ]
         acc += SIGNATURE_LEN
         self.content = packet.payload[acc:]
+        return self
 
 class DuplicatedPacket(BasePacket):
     def __init__(self) -> None:
@@ -179,6 +181,7 @@ class DuplicatedPacket(BasePacket):
         ]
         acc += 1
         self.content = packet.payload[acc:]
+        return self
 
 class AlertPacket(DuplicatedPacket):
     def __init__(self) -> None:

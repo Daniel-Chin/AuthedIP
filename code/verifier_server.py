@@ -1,42 +1,39 @@
-from shared import AuthedIpPacket, warn
-from constants import SUBSCRIBE_INTERVAL
+from socket import socket
+from shared import *
+from packet import *
 
-class VerifierServer:
+class VerifierServer(LoopThread):
     def __init__(self) -> None:
-        self.known_authedip_routers = ...   # pre-configured
+        super().__init__()
 
-        self.known_public_keys = self.askControllerFor_known_public_keys()
-        setInterval(SUBSCRIBE_INTERVAL, self.loop)
+        self.ip_addr : Addr = ...
+        self.known_public_keys = None
+        # represents physical link
+        self.sock : socket = ...
     
-    def verify(
-        self, packet : AuthedIpPacket, 
-        router_ip,      # the router who duplicated the packet
-        ingress_port,   # the ingress port of that router for the packet
-    ):
-        if not packet.verify(self.known_public_keys):
-            warn(f'Bad packet: {packet}')
-            self.sus(router_ip, ingress_port)
-    
-    def sus(self, router_ip, ingress_port):
-        # Take note of the suspicious event
-        (router_ip, ingress_port)
-        # When evidence accumulates, tell the router to 
-        # shut down that port. 
-        return NotImplemented() / 0
-    
-    def askControllerFor_known_public_keys(self):
-        # trivial
-        return NotImplemented(
-            'askControllerFor_known_public_keys'
-        ) / 0
+    def acquireKnownPublicKeys(self, pre_configured):
+        # verifier is supposed to ask controller for this. 
+        # But this is very trivial.
+        # In this demo, known_public_keys is preconfigured. 
+        self.known_public_keys = pre_configured
     
     def loop(self):
-        # tell controller that I want to subscribe to:
-        self.known_authedip_routers
-        # If I'm being overloaded, however, partially unsubscribe. 
-
-def setInterval(interval, func):
-    # Just like in JavaScript. 
-    # This conceptually starts to run `func` every `interval`. 
-    # Realistically, start a thread. 
-    return NotImplemented('setInterval', interval, func) / 0
+        ipPa = IPPacket()
+        ipPa.parse(self.sock, stop_before_payload=True)
+        ipPa.payload = b''
+        duPa = DuplicatedPacket().fromIPPacket(ipPa)
+        router_ip, _ = duPa.ingress_info
+        inner = IPPacket()
+        inner.parse(self.sock)
+        auPa = AuthedIpPacket().fromIPPacket(inner)
+        
+        if auPa.verify(self.known_public_keys):
+            if duPa.forward_this:
+                inner.send(self.sock)
+        else:
+            warn(f'Bad packet: {auPa}')
+            alPa = AlertPacket()
+            alPa.source_addr = self.ip_addr
+            alPa.  dest_addr = router_ip
+            alPa.ingress_info = duPa.ingress_info
+            alPa.asIPPacket().send(self.sock)

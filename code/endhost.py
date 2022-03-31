@@ -10,7 +10,15 @@ class Endhost:
         # represents physical link
         self.sock : socket = ...
 
-    def send(self, user : User, dest_addr, data):
+    def send(self, dest_addr, data):
+        packet = IPPacket()
+        packet.source_addr = self.ip_addr
+        packet.  dest_addr = dest_addr
+        packet.payload = data
+        packet.send(self.sock)
+
+class AuthedIPEndhost(Endhost):
+    def send(self, dest_addr, data, user : User):
         packet = AuthedIpPacket()
         packet.source_addr = self.ip_addr
         packet.  dest_addr = dest_addr

@@ -1,5 +1,7 @@
 ENDIAN = 'big'
 
+from threading import Thread
+
 class Addr:
     def __init__(self, addr_bytes = None) -> None:
         self.bytes = addr_bytes
@@ -8,7 +10,7 @@ class Addr:
         return '.'.join([str(x) for x in self.bytes])
 
 def warn(message):
-    print(message)
+    print('WARNING:', message)
     # And also log it to a file, notify operator, etc. 
 
 def recvall(s, size, use_list = True):
@@ -29,3 +31,15 @@ def recvall(s, size, use_list = True):
         while len(recved) < size:
             recved += s.recv(left)
     return recved
+
+class LoopThread(Thread):
+    def __init__(self) -> None:
+        super().__init__()
+        self.go_on = True
+    
+    def run(self):
+        try:
+            while self.go_on:
+                self.loop()
+        finally:
+            print('LoopThread shutdown.')

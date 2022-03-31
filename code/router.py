@@ -1,6 +1,5 @@
 from typing import List
 from functools import lru_cache
-from threading import Thread
 from random import random
 from time import time
 from socket import socket
@@ -16,12 +15,12 @@ class Port:
         # which side is the peer on?
         self.side = None    # INSIDE | OUTSIDE
 
-class Router(Thread):
+class Router(LoopThread):
     def __init__(self) -> None:
         super().__init__()
+
         self.ports : List[Port] = []
         self.table = {}
-        self.go_on = True
     
     def fillPortIds(self):
         for i, port in enumerate(self.ports):
@@ -48,11 +47,6 @@ class Router(Thread):
             packet.parse(s)
             self.forward(packet, in_port)
 
-    def run(self):
-        while self.go_on:
-            self.loop()
-        print('router thread shutdown.')
-    
     def forward(self, packet : IPPacket, in_port : Port):
         out_port = self.table[packet.dest_addr]
         packet.send(out_port.sock)
@@ -63,7 +57,9 @@ class AuthedIPRouter(Router):
         super().__init__()
         self.ip_addr : Addr = ...
         self.controller_ip : Addr = ...    # pre-configured
-        self.verifier_ip : Addr = None     # given by Controller
+        self.verifier_ip : Addr = None     
+        # `verifier_ip` should be given by Controller; 
+        # but in this simulation, it's pre-configured. 
         self.port_sus = [0] * 99    # port.id -> sus
         self.last_time = time()
     
@@ -80,7 +76,7 @@ class AuthedIPRouter(Router):
                 self.readAlert(packet)
             else:
                 self.port_sus[in_port.id] += 1
-                # log; notify operator
+                warn('outside link sent packet to router')
         else:
             sus = self.port_sus[in_port.id]
             if not self.noLeak(sus):
@@ -101,8 +97,7 @@ class AuthedIPRouter(Router):
                     super().forward(duPa.asIPPacket(), None)
     
     def readAlert(self, packet : IPPacket):
-        alPa = AlertPacket()
-        alPa.fromIPPacket(packet)
+        alPa = AlertPacket().fromIPPacket(packet)
         addr, port_id = alPa.ingress_info
         assert addr == self.ip_addr
         self.port_sus[port_id] += 1
@@ -114,7 +109,7 @@ class AuthedIPRouter(Router):
                     break
                 self.loop()
             self.decaySus()
-        print('router thread shutdown.')
+        print('authedip router thread shutdown.')
     
     def decaySus(self):
         dt = time() - self.last_time
