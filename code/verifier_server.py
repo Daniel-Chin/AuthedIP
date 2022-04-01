@@ -6,7 +6,7 @@ from packet import *
 
 class VerifierServer(LoopThread):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__('verifier')
 
         self.ip_addr: Addr = ...
         self.known_public_keys = None

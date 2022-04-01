@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from functools import lru_cache
 from random import random
 from time import time
@@ -20,12 +20,16 @@ class Port:
         self.peer = ...
 
 class Router(LoopThread):
-    def __init__(self, profile_volume = None) -> None:
-        super().__init__()
+    def __init__(
+        self, profile_volume = None, verbose=False, 
+    ) -> None:
+        super().__init__('router')
 
         self.profile_volume = profile_volume
+        self.verbose = verbose
+
         self.ports: List[Port] = []
-        self.table = {}
+        self.table: Dict[bytes, Port] = {}
     
     def fillPortIds(self):
         for i, port in enumerate(self.ports):
@@ -55,6 +59,10 @@ class Router(LoopThread):
                     payload_len + IP_HEADERS_LEN
                 )
             self.forward(packet, in_port)
+            # if self.verbose:
+                # print(
+                #     packet.source_addr, '->', packet.dest_addr, 
+                # )
 
     def lookup(self, packet: IPPacket):
         try:
@@ -63,6 +71,8 @@ class Router(LoopThread):
             raise KeyError(f"""{
                 packet.dest_addr
             } not in table of {self}.""")
+        # if self.verbose:
+            # print(packet.dest_addr, out_port.peer)
         return out_port
 
     def forward(self, packet: IPPacket, in_port: Port):
@@ -70,8 +80,8 @@ class Router(LoopThread):
         packet.send(out_port.sock)
 
 class AuthedIPRouter(Router):
-    def __init__(self, profile_volume = None) -> None:
-        super().__init__(profile_volume)
+    def __init__(self, *a, **kw) -> None:
+        super().__init__(*a, **kw)
         self.ip_addr: Addr = ...
         self.controller_ip: Addr = ...    # pre-configured
         self.verifier_ip: Addr = None     
@@ -88,7 +98,7 @@ class AuthedIPRouter(Router):
         return BASE_CHECK_PROBABILITY * (1 + sus * .1)
     
     def noLeak(self, sus):
-        return sus >= 4
+        return sus >= NO_LEAK_SUS
 
     def forward(self, packet: IPPacket, in_port: Port):
         if packet.dest_addr == self.ip_addr:
@@ -117,15 +127,24 @@ class AuthedIPRouter(Router):
                     duPa.source_addr = self.ip_addr
                     duPa.  dest_addr = self.verifier_ip
                     duPa.ingress_info = (self.ip_addr, in_port.id)
+                    ipPa = duPa.asIPPacket()
                     if self.noLeak(sus):
                         duPa.forward_this = b'1'
-                    duPa.asIPPacket().send(out_port.sock)
+                    ipPa.send(
+                        self.lookup(ipPa).sock, 
+                    )
     
     def readAlert(self, packet: IPPacket):
         alPa = AlertPacket().fromIPPacket(packet)
         addr, port_id = alPa.ingress_info
         assert addr == self.ip_addr
         self.port_sus[port_id] += 1
+        if (
+            NO_LEAK_SUS - 1 < 
+            self.port_sus[port_id] 
+            <= NO_LEAK_SUS
+        ):
+            print(self, 'entered verify-then-forward mode.')
 
     def loop(self):
         for _ in range(16):

@@ -1,6 +1,7 @@
 PACKET_TIMEOUT = 10     # 10 s
 BASE_CHECK_PROBABILITY = 0.1     # 10%
 SUS_DECAY = .05   # sus per second
+NO_LEAK_SUS = 4
 
 ENDIAN = 'big'
 RSA_KEY_BITS = 512

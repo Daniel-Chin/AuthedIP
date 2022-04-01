@@ -1,6 +1,6 @@
 from functools import lru_cache
 from typing import Tuple
-from time import time
+from time import time, sleep
 
 import rsa
 
@@ -36,6 +36,8 @@ class IPPacket(BasePacket):
         pass
         # payload
         io.send(self.payload)
+        # sleep((IP_HEADERS_LEN + len(self.payload)) * .0001)
+        # This simulates the fact that link speed is finite
     
     def recvall(self, sock, size):
         data = recvall(sock, size)

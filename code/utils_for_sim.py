@@ -30,6 +30,8 @@ def newLink():
     s0.connect(RENDEZVOUS)
     s1, (ip_addr, _) = serverSock.accept()
     assert ip_addr in (RENDEZVOUS[0], '127.0.0.1')
+    s0.settimeout(SHUTDOWN_TIME)
+    s1.settimeout(SHUTDOWN_TIME)
     return s0, s1
 
 def serialConnect(*nodes):
@@ -62,7 +64,7 @@ def installRoute(*nodes):
 
 class ReadAloud(LoopThread):
     def __init__(self, endhost: Endhost) -> None:
-        super().__init__()
+        super().__init__('read aloud')
 
         self.endhost = endhost
     
@@ -78,7 +80,7 @@ class ReadAloud(LoopThread):
 
 class StoreLatency(LoopThread):
     def __init__(self, endhost: Endhost, storage) -> None:
-        super().__init__()
+        super().__init__('store latency')
 
         self.endhost = endhost
         self.storage = storage
@@ -96,12 +98,26 @@ class StoreLatency(LoopThread):
             )
             self.storage.append(dt)
 
+class Drain(LoopThread):
+    def __init__(self, endhost: Endhost) -> None:
+        super().__init__('drain')
+
+        self.endhost = endhost
+    
+    def loop(self):
+        r_ready, _, _ = select(
+            [self.endhost.sock], [], [], 
+            SHUTDOWN_TIME, 
+        )
+        if r_ready:
+            IPPacket().parse(r_ready[0])
+
 class Babbler(LoopThread):
     def __init__(
         self, endhost: Endhost, to_who: Addr, 
         interval = 1, user = None, bulk_data = False, 
     ) -> None:
-        super().__init__()
+        super().__init__('babbler')
 
         self.endhost = endhost
         self.to_who: Addr = to_who
