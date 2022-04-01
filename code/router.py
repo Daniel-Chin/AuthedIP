@@ -50,7 +50,12 @@ class Router(LoopThread):
             self.forward(packet, in_port)
 
     def forward(self, packet: IPPacket, in_port: Port):
-        out_port = self.table[packet.dest_addr.bytes]
+        try:
+            out_port = self.table[packet.dest_addr.bytes]
+        except KeyError:
+            raise KeyError(f"""{
+                packet.dest_addr
+            } not in table of {self}.""")
         packet.send(out_port.sock)
         return out_port
 
@@ -65,6 +70,9 @@ class AuthedIPRouter(Router):
         self.port_sus = [0] * 99    # port.id -> sus
         self.last_time = time()
         self.side = None    # INSIDE | OUTSIDE
+    
+    def __repr__(self):
+        return f'<Router {self.ip_addr}>'
     
     def checkProbability(self, sus):
         return BASE_CHECK_PROBABILITY * (1 + sus * .1)
@@ -89,7 +97,10 @@ class AuthedIPRouter(Router):
             # Sometimes wrap a duplicate of the packet
             # and send to verifier. 
             if in_port.side == OUTSIDE and out_port.side == INSIDE:
-                if self.no_leak or random() < self.checkProbability():
+                if (
+                    self.noLeak(sus) 
+                    or random() < self.checkProbability(sus)
+                ):
                     duPa = DuplicatedPacket()
                     duPa.content = packet.bytes()
                     duPa.source_addr = self.ip_addr
@@ -105,14 +116,12 @@ class AuthedIPRouter(Router):
         assert addr == self.ip_addr
         self.port_sus[port_id] += 1
 
-    def run(self):
-        while self.go_on:
-            for _ in range(16):
-                if not self.go_on:
-                    break
-                self.loop()
-            self.decaySus()
-        print('authedip router thread shutdown.')
+    def loop(self):
+        for _ in range(16):
+            if not self.go_on:
+                break
+            super().loop()
+        self.decaySus()
     
     def decaySus(self):
         dt = time() - self.last_time

@@ -126,15 +126,15 @@ class AuthedIpPacket(BasePacket):
         self.  dest_addr = packet.  dest_addr
         acc = 0
         self.timestamp = int.from_bytes(packet.payload[
-            acc:acc+TIMESTAMP_LEN
+            acc : acc + TIMESTAMP_LEN
         ], ENDIAN)
         acc += TIMESTAMP_LEN
         self.rsa_public_key_id = packet.payload[
-            acc:acc+RSA_KEY_ID_BITS
+            acc : acc + RSA_KEY_ID_BITS
         ]
         acc += RSA_KEY_ID_BITS
         self.signature = packet.payload[
-            acc:acc+SIGNATURE_LEN
+            acc : acc + SIGNATURE_LEN
         ]
         acc += SIGNATURE_LEN
         self.content = packet.payload[acc:]
@@ -149,7 +149,7 @@ class DuplicatedPacket(BasePacket):
         self.content: bytes = None
 
     def ingressInfoBytes(self):
-        addr , port_id = self.ingress_info
+        addr, port_id = self.ingress_info
         return (
             addr.bytes + 
             port_id.to_bytes(PORT_ID_LEN, ENDIAN)
@@ -170,15 +170,20 @@ class DuplicatedPacket(BasePacket):
         self.source_addr = packet.source_addr
         self.  dest_addr = packet.  dest_addr
         acc = 0
-        addr, port_id_enc = packet.payload[
-            acc:acc+INGRESS_INFO_LEN
+        addr_bytes = packet.payload[
+            acc : acc + IP_ADDR_LEN
         ]
+        acc += IP_ADDR_LEN
+        port_id_enc = packet.payload[
+            acc : acc + PORT_ID_LEN
+        ]
+        acc += PORT_ID_LEN
         self.ingress_info = (
-            addr, int.from_bytes(port_id_enc, ENDIAN), 
+            Addr(addr_bytes), 
+            int.from_bytes(port_id_enc, ENDIAN), 
         )
-        acc += INGRESS_INFO_LEN
         self.forward_this = packet.payload[
-            acc:acc+1
+            acc : acc + 1
         ]
         acc += 1
         self.content = packet.payload[acc:]

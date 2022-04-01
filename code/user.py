@@ -13,6 +13,12 @@ class User:
     @lru_cache(1)
     def pubKeyId(self):
         return key2Id(self.pubKey)
+    
+    def newKeys(self):
+        self.pubKey, self.priKey = rsa.newkeys(
+            RSA_KEY_BITS, poolsize=1, 
+        )
+        return self
 
 def key2Id(pubKey: rsa.PublicKey):
     return pubKey.n.to_bytes(

@@ -1,7 +1,6 @@
 from time import sleep, perf_counter
 from socket import socket
 from select import select
-from random import random
 
 from shared import *
 from net_interface import *
@@ -9,6 +8,7 @@ from router import *
 
 RENDEZVOUS = ( 'localhost', 2333 )
 Endhost = NetInterface
+AuthedIPEndhost = AuthedIPNetInterface
 
 serverSock: socket = None
 
@@ -73,23 +73,44 @@ class ReadAloud(LoopThread):
         if r_ready:
             ipPa = IPPacket()
             ipPa.parse(r_ready[0])
+            print(self.endhost, ipPa.payload)
+
+class StoreLatency(LoopThread):
+    def __init__(self, endhost: Endhost, storage) -> None:
+        super().__init__()
+
+        self.endhost = endhost
+        self.storage = storage
+    
+    def loop(self):
+        r_ready, _, _ = select(
+            [self.endhost.sock], [], [], 
+            SHUTDOWN_TIME, 
+        )
+        if r_ready:
+            ipPa = IPPacket()
+            ipPa.parse(r_ready[0])
             dt = perf_counter() - float(ipPa.payload)
-            print(self.endhost, f'{dt=}')
+            self.storage.append(dt)
 
 class Babbler(LoopThread):
     def __init__(
         self, endhost: Endhost, to_who: Addr, 
-        interval = 1, 
+        interval = 1, user = None, 
     ) -> None:
         super().__init__()
 
         self.endhost = endhost
         self.to_who: Addr = to_who
         self.interval = interval
+        self.send_kw = {}
+        if user is not None:
+            self.send_kw['user'] = user
     
     def loop(self):
         self.endhost.send(
             self.to_who, 
             str(perf_counter()).encode(), 
+            **self.send_kw, 
         )
         sleep(self.interval)

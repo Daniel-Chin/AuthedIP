@@ -21,6 +21,8 @@ def main():
         e3.ip_addr = Addr().random()
 
         serialConnect(e0, r1, r2, e3)
+        r1.fillPortIds()
+        r2.fillPortIds()
 
         installRoute(e0, r1, r2)
         installRoute(e3, r2, r1)

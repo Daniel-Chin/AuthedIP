@@ -16,7 +16,7 @@ scream for help
 
 limitations
   may need salting to prevent slow brute force of signature. Controller should declare salt of the day. 
-  the conversation between router and verifier should be encrypted. or, check source IP. 
+  the conversation between router, verifier, and controller should be encrypted. or, check source IP. 
     otherwise, attacker can 
       send fake "duplicated packets" to verifier. The first ones will pass through. 
       send fake alerts to routers. 
