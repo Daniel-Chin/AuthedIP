@@ -12,9 +12,11 @@ class Port:
     def __init__(self) -> None:
         self.id = None
         self.sock: socket = None
+        
         # which side is the peer on?
         self.side = None    # INSIDE | OUTSIDE
-        # demo-only
+
+        # isn't part of the protocol. is only in this demo. 
         self.peer = ...
 
 class Router(LoopThread):
@@ -69,7 +71,7 @@ class AuthedIPRouter(Router):
         self.controller_ip: Addr = ...    # pre-configured
         self.verifier_ip: Addr = None     
         # `verifier_ip` should be given by Controller; 
-        # but in this simulation, it's pre-configured. 
+        # but in this demo, it's pre-configured. 
         self.port_sus = [0] * 99    # port.id -> sus
         self.last_time = time()
         self.side = None    # INSIDE | OUTSIDE

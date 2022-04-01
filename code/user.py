@@ -6,7 +6,7 @@ from shared import *
 
 class User:
     def __init__(self) -> None:
-        # The RSA public key is registered with the Controller. 
+        # The RSA public key is registered with Controller. 
         self.pubKey: rsa. PublicKey = ...
         self.priKey: rsa.PrivateKey = ...
     
@@ -21,6 +21,7 @@ class User:
         return self
 
 def key2Id(pubKey: rsa.PublicKey):
+    # Take the suffix of the hash of the key. 
     return pubKey.n.to_bytes(
         RSA_KEY_BITS // 8, ENDIAN, 
     )[- RSA_KEY_ID_BITS // 8 :]

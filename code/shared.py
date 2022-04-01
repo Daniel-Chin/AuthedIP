@@ -1,5 +1,3 @@
-ENDIAN = 'big'
-
 import os
 from time import time
 from socket import socket, timeout as SocketTimeout

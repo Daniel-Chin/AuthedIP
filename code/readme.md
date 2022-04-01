@@ -1,6 +1,4 @@
 Reading order: 
-- constants.py
-- shared.py
 - packet.py
 - user.py
 - net_interface.py

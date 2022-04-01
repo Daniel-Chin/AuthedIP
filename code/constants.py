@@ -1,6 +1,8 @@
 PACKET_TIMEOUT = 10     # 10 s
 BASE_CHECK_PROBABILITY = 0.1     # 10%
 SUS_DECAY = .05   # sus per second
+
+ENDIAN = 'big'
 RSA_KEY_BITS = 512
 HASH_METHOD = 'SHA-256'
 HASH_LEN = 32
