@@ -6,11 +6,11 @@ r: router,
 v: verifier, 
 c: controller. 
 
-e0 - r1 - r6 - r2 - r7 - e3
+e0 - r1 - r6 - r2 - e3
      |         |
-     r4        r5
-     |         |
-     v         c
+     v         r5
+               |
+               c
 """
 
 from time import sleep
@@ -52,7 +52,7 @@ def measure(
     v.ip_addr = Addr(b'<v >')
     v.acquireKnownPublicKeys(c.known_public_keys)  # magic
 
-    vols = {1: [], 2: [], 4: [], 5: [], 6: [], 7: []}
+    vols = {1: [], 2: [], 5: [], 6: []}
     r1 = SomeRouter(vols[1])
     r1.ip_addr = Addr(b'<r1>')
     r1.controller_ip = c.ip_addr
@@ -63,11 +63,6 @@ def measure(
     r2.controller_ip = c.ip_addr
     r2.verifier_ip = v.ip_addr
     r2.side = INSIDE
-    r4 = SomeRouter(vols[4])
-    r4.ip_addr = Addr(b'<r4>')
-    r4.controller_ip = c.ip_addr
-    r4.verifier_ip = v.ip_addr
-    r4.side = INSIDE
     r5 = SomeRouter(vols[5])
     r5.ip_addr = Addr(b'<r5>')
     r5.controller_ip = c.ip_addr
@@ -78,39 +73,23 @@ def measure(
     r6.controller_ip = c.ip_addr
     r6.verifier_ip = v.ip_addr
     r6.side = INSIDE
-    r7 = SomeRouter(vols[7])
-    r7.ip_addr = Addr(b'<r7>')
-    r7.controller_ip = c.ip_addr
-    r7.verifier_ip = v.ip_addr
-    r7.side = INSIDE
 
-    serialConnect(e0, r1, r6, r2, r7, e3)
-    serialConnect(r1, r4, v)
+    serialConnect(e0, r1, r6, r2, e3)
+    serialConnect(r1, v)
     serialConnect(r2, r5)
     r1.fillPortIds()
     r2.fillPortIds()
-    r4.fillPortIds()
     r5.fillPortIds()
     r6.fillPortIds()
-    r7.fillPortIds()
 
     installRoute(e0, r1, r6, r2, r5)
-    installRoute(e0, r1, r6, r2, r7)
-    installRoute(e0, r1, r4)
-    installRoute(r1, r4)
     installRoute(r1, r6, r2, r5)
-    installRoute(r1, r6, r2, r7)
     installRoute(r2, r5)
-    installRoute(r2, r7)
-    installRoute(r2, r6, r1, r4)
-    installRoute(e3, r7, r2, r6, r1, r4)
-    installRoute(e3, r7, r2, r5)
-    installRoute(r4, r1, r6, r2, r5)
-    installRoute(r4, r1, r6, r2, r7)
-    installRoute(r5, r2, r6, r1, r4)
-    installRoute(r5, r2, r7)
-    installRoute(v, r4, r1, r6, r2, r5)
-    installRoute(v, r4, r1, r6, r2, r7)
+    installRoute(r2, r6, r1)
+    installRoute(e3, r2, r6, r1)
+    installRoute(e3, r2, r5)
+    installRoute(r5, r2, r6, r1)
+    installRoute(v, r1, r6, r2, r5)
 
     if not is_authedip:
         u0 = None
@@ -118,7 +97,7 @@ def measure(
 
     threads: List[LoopThread] = [
         Drain(e3), 
-        r1, r2, r4, r5, r6, r7, v, 
+        r1, r2, r5, r6, v, 
         Babbler(
             e0, e3.ip_addr, 
             interval=0, user=None, bulk_data=True, # DoS
@@ -147,7 +126,7 @@ def main():
     print()
     overall_ip = 0
     overall_au = 0
-    for k in (1, 2, 4, 5, 6, 7):
+    for k in (1, 2, 5, 6):
         overall_ip += ip_vol[k]
         overall_au += au_vol[k]
         try:
