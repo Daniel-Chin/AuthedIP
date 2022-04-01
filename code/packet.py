@@ -91,9 +91,11 @@ class AuthedIpPacket(BasePacket):
         
         # Check if public key is registered
         try:
-            rsa_public_key = known_public_keys[self.rsa_public_key_id]
+            rsa_public_key = known_public_keys[
+                self.rsa_public_key_id
+            ]
         except KeyError:
-            warn('unknown public key')
+            warn(f'unknown public key {self.rsa_public_key_id}')
             return False
 
         # Check RSA signature
@@ -133,9 +135,9 @@ class AuthedIpPacket(BasePacket):
         ], ENDIAN)
         acc += TIMESTAMP_LEN
         self.rsa_public_key_id = packet.payload[
-            acc : acc + RSA_KEY_ID_BITS
+            acc : acc + RSA_KEY_ID_BITS // 8
         ]
-        acc += RSA_KEY_ID_BITS
+        acc += RSA_KEY_ID_BITS // 8
         self.signature = packet.payload[
             acc : acc + SIGNATURE_LEN
         ]

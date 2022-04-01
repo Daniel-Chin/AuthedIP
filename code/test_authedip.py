@@ -23,14 +23,14 @@ def main():
         u3 = User().newKeys()
 
         e0 = AuthedIPEndhost()
-        e0.ip_addr = Addr().random()
+        e0.ip_addr = Addr(b'<e0>')
         e0.side = OUTSIDE
         e3 = AuthedIPEndhost()
-        e3.ip_addr = Addr().random()
+        e3.ip_addr = Addr(b'<e3>')
         e3.side = OUTSIDE
 
         c = Controller()
-        c.ip_addr = Addr().random()
+        c.ip_addr = Addr(b'<c >')
         c.known_public_keys = {
             u0.pubKeyId(): u0.pubKey, 
             u3.pubKeyId(): u3.pubKey, 
@@ -38,7 +38,8 @@ def main():
         del c.sock
 
         v = VerifierServer()
-        v.ip_addr = Addr().random()
+        v.ip_addr = Addr(b'<v >')
+        print('known pubkeys', c.known_public_keys)
         v.acquireKnownPublicKeys(c.known_public_keys)  # magic
 
         r1 = AuthedIPRouter()
@@ -47,17 +48,17 @@ def main():
         r1.verifier_ip = v.ip_addr
         r1.side = INSIDE
         r2 = AuthedIPRouter()
-        r2.ip_addr = Addr().random()
+        r2.ip_addr = Addr(b'<r2>')
         r2.controller_ip = c.ip_addr
         r2.verifier_ip = v.ip_addr
         r2.side = INSIDE
         r4 = AuthedIPRouter()
-        r4.ip_addr = Addr().random()
+        r4.ip_addr = Addr(b'<r4>')
         r4.controller_ip = c.ip_addr
         r4.verifier_ip = v.ip_addr
         r4.side = INSIDE
         r5 = AuthedIPRouter()
-        r5.ip_addr = Addr().random()
+        r5.ip_addr = Addr(b'<r5>')
         r5.controller_ip = c.ip_addr
         r5.verifier_ip = v.ip_addr
         r5.side = INSIDE

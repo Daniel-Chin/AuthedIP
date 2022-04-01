@@ -36,7 +36,7 @@ class VerifierServer(LoopThread):
         auPa = AuthedIpPacket().fromIPPacket(inner)
         
         if auPa.verify(self.known_public_keys):
-            print('Good packet.')
+            # print('Verification passed.')
             if duPa.forward_this == b'1':
                 inner.send(self.sock)
         else:
