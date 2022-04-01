@@ -73,7 +73,7 @@ class ReadAloud(LoopThread):
         if r_ready:
             ipPa = IPPacket()
             ipPa.parse(r_ready[0])
-            print(self.endhost, ipPa.payload)
+            print(self.endhost, self.endhost.unbox(ipPa))
 
 class StoreLatency(LoopThread):
     def __init__(self, endhost: Endhost, storage) -> None:
@@ -90,7 +90,9 @@ class StoreLatency(LoopThread):
         if r_ready:
             ipPa = IPPacket()
             ipPa.parse(r_ready[0])
-            dt = perf_counter() - float(ipPa.payload)
+            dt = perf_counter() - float(
+                self.endhost.unbox(ipPa)[1],
+            )
             self.storage.append(dt)
 
 class Babbler(LoopThread):

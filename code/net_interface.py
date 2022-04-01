@@ -10,6 +10,9 @@ class NetInterface:
 
         # represents physical link
         self.sock: socket = ...
+    
+    def __repr__(self):
+        return f'<NIC {self.ip_addr}>'
 
     def send(self, dest_addr, data):
         packet = IPPacket()
@@ -18,8 +21,8 @@ class NetInterface:
         packet.payload = data
         packet.send(self.sock)
     
-    def __repr__(self):
-        return f'<NIC {self.ip_addr}>'
+    def unbox(self, packet: IPPacket):
+        return packet.source_addr, packet.payload
 
 class AuthedIPNetInterface(NetInterface):
     def __init__(self) -> None:
@@ -37,3 +40,7 @@ class AuthedIPNetInterface(NetInterface):
         packet.sign(user.priKey)
         
         packet.asIPPacket().send(self.sock)
+
+    def unbox(self, packet: IPPacket):
+        auPa = AuthedIpPacket().fromIPPacket(packet)
+        return auPa.source_addr, auPa.content
