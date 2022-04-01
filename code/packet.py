@@ -86,12 +86,14 @@ class AuthedIpPacket(BasePacket):
     def verify(self, known_public_keys):
         # Check if fresh
         if time() - self.timestamp >= PACKET_TIMEOUT:
+            warn('old packet')
             return False
         
         # Check if public key is registered
         try:
             rsa_public_key = known_public_keys[self.rsa_public_key_id]
         except KeyError:
+            warn('unknown public key')
             return False
 
         # Check RSA signature
@@ -102,6 +104,7 @@ class AuthedIpPacket(BasePacket):
             ) != HASH_METHOD:
                 raise ValueError
         except (ValueError, rsa.pkcs1.VerificationError):
+            warn('wrong signature')
             return False
         
         # All OK

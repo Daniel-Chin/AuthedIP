@@ -27,7 +27,7 @@ class VerifierServer(LoopThread):
         ipPa = IPPacket()
         ipPa.parse(r_ready[0], stop_before_payload=True)
         ipPa.payload = ipPa.recvall(
-            r_ready[0], INGRESS_INFO_LEN, 
+            r_ready[0], INGRESS_INFO_LEN + 1, 
         )
         duPa = DuplicatedPacket().fromIPPacket(ipPa)
         router_ip, _ = duPa.ingress_info
@@ -36,10 +36,11 @@ class VerifierServer(LoopThread):
         auPa = AuthedIpPacket().fromIPPacket(inner)
         
         if auPa.verify(self.known_public_keys):
+            print('Good packet.')
             if duPa.forward_this == b'1':
                 inner.send(self.sock)
         else:
-            warn(f'Bad packet: {auPa}')
+            # warn(f'Bad packet: {auPa}')
             alPa = AlertPacket()
             alPa.source_addr = self.ip_addr
             alPa.  dest_addr = router_ip

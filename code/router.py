@@ -49,15 +49,18 @@ class Router(LoopThread):
             packet.parse(s)
             self.forward(packet, in_port)
 
-    def forward(self, packet: IPPacket, in_port: Port):
+    def lookup(self, packet: IPPacket):
         try:
             out_port = self.table[packet.dest_addr.bytes]
         except KeyError:
             raise KeyError(f"""{
                 packet.dest_addr
             } not in table of {self}.""")
-        packet.send(out_port.sock)
         return out_port
+
+    def forward(self, packet: IPPacket, in_port: Port):
+        out_port = self.lookup(packet)
+        packet.send(out_port.sock)
 
 class AuthedIPRouter(Router):
     def __init__(self) -> None:
@@ -89,10 +92,11 @@ class AuthedIPRouter(Router):
                 self.port_sus[in_port.id] += 1
                 warn('outside link sent packet to router')
         else:
+            out_port = self.lookup(packet)
             sus = self.port_sus[in_port.id]
             if not self.noLeak(sus):
                 # first, forward everything
-                out_port = super().forward(packet, in_port)
+                packet.send(out_port.sock)
 
             # Sometimes wrap a duplicate of the packet
             # and send to verifier. 
@@ -107,8 +111,8 @@ class AuthedIPRouter(Router):
                     duPa.  dest_addr = self.verifier_ip
                     duPa.ingress_info = (self.ip_addr, in_port.id)
                     if self.noLeak(sus):
-                        duPa.forward_this = True
-                    super().forward(duPa.asIPPacket(), None)
+                        duPa.forward_this = b'1'
+                    duPa.asIPPacket().send(out_port.sock)
     
     def readAlert(self, packet: IPPacket):
         alPa = AlertPacket().fromIPPacket(packet)

@@ -1,6 +1,8 @@
 ENDIAN = 'big'
 
 import os
+from time import time
+from socket import socket, timeout as SocketTimeout
 from threading import Thread, Lock
 import traceback
 
@@ -26,24 +28,36 @@ def warn(message):
     print('WARNING:', message)
     # And also log it to a file, notify operator, etc. 
 
-def recvall(s, size, use_list = True):
+def recvall(s: socket, size: int, timeout=5, dt=1):
     """
-    Receive `size` bytes from socket `s`. Blocks until gets all. 
+    Receive `size` bytes from socket `s`.  
+    `timeout` is in seconds. If `None`, blocks until gets all. 
     Somehow doesn't handle socket closing. 
     I will fix that when I have time. 
     """
-    if use_list:
-        left = size
-        buffer = []
-        while left > 0:
-            buffer.append(s.recv(left))
-            left -= len(buffer[-1])
-        recved = b''.join(buffer)
+    left = size
+    buffer = []
+    if timeout is None:
+        s.settimeout(None)
     else:
-        recved = b''
-        while len(recved) < size:
-            recved += s.recv(left)
-    return recved
+        deadline = time() + timeout
+        s.settimeout(dt)
+    while left > 0:
+        try:
+            recved = s.recv(left)
+        except SocketTimeout:
+            pass
+        if recved == b'':
+            raise EOFError(f'Socket {s} remote closed. ')
+        buffer.append(recved)
+        left -= len(recved)
+        if (
+            timeout is not None 
+            and time() > deadline 
+            and left > 0
+        ):
+            raise TimeoutError
+    return b''.join(buffer)
 
 stackTraceLock = Lock()
 class LoopThread(Thread):
