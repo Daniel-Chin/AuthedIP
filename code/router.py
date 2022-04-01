@@ -20,9 +20,10 @@ class Port:
         self.peer = ...
 
 class Router(LoopThread):
-    def __init__(self) -> None:
+    def __init__(self, profile_volume = None) -> None:
         super().__init__()
 
+        self.profile_volume = profile_volume
         self.ports: List[Port] = []
         self.table = {}
     
@@ -48,7 +49,11 @@ class Router(LoopThread):
             s: socket
             in_port = self.sock2Port(s)
             packet = IPPacket()
-            packet.parse(s)
+            payload_len = packet.parse(s)
+            if self.profile_volume is not None:
+                self.profile_volume.append(
+                    payload_len + IP_HEADERS_LEN
+                )
             self.forward(packet, in_port)
 
     def lookup(self, packet: IPPacket):
@@ -65,8 +70,8 @@ class Router(LoopThread):
         packet.send(out_port.sock)
 
 class AuthedIPRouter(Router):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, profile_volume = None) -> None:
+        super().__init__(profile_volume)
         self.ip_addr: Addr = ...
         self.controller_ip: Addr = ...    # pre-configured
         self.verifier_ip: Addr = None     

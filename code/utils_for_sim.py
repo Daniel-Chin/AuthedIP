@@ -1,3 +1,4 @@
+from os import urandom
 from time import sleep, perf_counter
 from socket import socket
 from select import select
@@ -91,28 +92,32 @@ class StoreLatency(LoopThread):
             ipPa = IPPacket()
             ipPa.parse(r_ready[0])
             dt = perf_counter() - float(
-                self.endhost.unbox(ipPa)[1],
+                self.endhost.unbox(ipPa)[1].split(b'\n', 1)[0],
             )
             self.storage.append(dt)
 
 class Babbler(LoopThread):
     def __init__(
         self, endhost: Endhost, to_who: Addr, 
-        interval = 1, user = None, 
+        interval = 1, user = None, bulk_data = False, 
     ) -> None:
         super().__init__()
 
         self.endhost = endhost
         self.to_who: Addr = to_who
         self.interval = interval
+        self.bulk_data = bulk_data
         self.send_kw = {}
         if user is not None:
             self.send_kw['user'] = user
     
     def loop(self):
+        content = str(perf_counter()).encode()
+        if self.bulk_data:
+            content += b'\n' + urandom(256)
         self.endhost.send(
             self.to_who, 
-            str(perf_counter()).encode(), 
+            content, 
             **self.send_kw, 
         )
         sleep(self.interval)

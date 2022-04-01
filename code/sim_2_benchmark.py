@@ -1,4 +1,6 @@
 """
+Compare IP and AuthedIP latencies and traffic volume. 
+
 e: endhost, 
 r: router, 
 v: verifier, 
@@ -21,7 +23,10 @@ from router import *
 from controller import *
 from verifier_server import *
 
-def measure(is_authedip, for_how_long, interval):
+def measure(
+    is_authedip, for_how_long, interval, 
+    profile_volume = None, 
+):
     if is_authedip:
         SomeEndhost = AuthedIPEndhost
         SomeRouter = AuthedIPRouter
@@ -50,22 +55,22 @@ def measure(is_authedip, for_how_long, interval):
     v.ip_addr = Addr(b'<v >')
     v.acquireKnownPublicKeys(c.known_public_keys)  # magic
 
-    r1 = SomeRouter()
+    r1 = SomeRouter(profile_volume)
     r1.ip_addr = Addr(b'<r1>')
     r1.controller_ip = c.ip_addr
     r1.verifier_ip = v.ip_addr
     r1.side = INSIDE
-    r2 = SomeRouter()
+    r2 = SomeRouter(profile_volume)
     r2.ip_addr = Addr(b'<r2>')
     r2.controller_ip = c.ip_addr
     r2.verifier_ip = v.ip_addr
     r2.side = INSIDE
-    r4 = SomeRouter()
+    r4 = SomeRouter(profile_volume)
     r4.ip_addr = Addr(b'<r4>')
     r4.controller_ip = c.ip_addr
     r4.verifier_ip = v.ip_addr
     r4.side = INSIDE
-    r5 = SomeRouter()
+    r5 = SomeRouter(profile_volume)
     r5.ip_addr = Addr(b'<r5>')
     r5.controller_ip = c.ip_addr
     r5.verifier_ip = v.ip_addr
@@ -101,8 +106,14 @@ def measure(is_authedip, for_how_long, interval):
         StoreLatency(e0, latencies), 
         StoreLatency(e3, latencies), 
         r1, r2, r4, r5, v, 
-        Babbler(e0, e3.ip_addr, interval, u0), 
-        Babbler(e3, e0.ip_addr, interval, u3), 
+        Babbler(
+            e0, e3.ip_addr, interval, u0, 
+            profile_volume is not None, 
+        ), 
+        Babbler(
+            e3, e0.ip_addr, interval, u3, 
+            profile_volume is not None, 
+        ), 
     ]
 
     try:
@@ -124,11 +135,24 @@ def main():
         # sleep(1.1)
         print(f'{DURATION=} seconds')
         print('measuring ip...')
-        ip       = measure(False, DURATION, interval)
+        volume = []
+        ip       = measure(False, DURATION, interval, volume)
+        ip_vol = sum(volume)
         sleep(1.1)
         print('measuring authedip...')
-        authedip = measure(True , DURATION, interval)
+        volume.clear()
+        authedip = measure(True , DURATION, interval, volume)
+        au_vol = sum(volume)
+        sleep(1.1)
+    print()
     print('sample size:', len(ip), len(authedip))
+
+    print(
+        'ip volume:', ip_vol, 
+        'authedip volume:', au_vol, 
+        'ratio:', format(au_vol / ip_vol, '.1%'), 
+    )
+
     CUTOFF = .01
     ip       = [x * 1000 for x in ip       if x < CUTOFF]
     authedip = [x * 1000 for x in authedip if x < CUTOFF]

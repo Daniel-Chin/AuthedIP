@@ -1,4 +1,6 @@
 """
+Test AuthedIP. 
+
 e: endhost, 
 r: router, 
 v: verifier, 

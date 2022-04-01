@@ -1,4 +1,6 @@
 """
+Test IP, which is our baseline. 
+
 e: endhost, 
 r: router, 
 v: verifier, 

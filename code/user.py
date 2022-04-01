@@ -14,9 +14,9 @@ class User:
     def pubKeyId(self):
         return key2Id(self.pubKey)
     
-    def newKeys(self):
+    def newKeys(self, poolsize=1):
         self.pubKey, self.priKey = rsa.newkeys(
-            RSA_KEY_BITS, poolsize=1, 
+            RSA_KEY_BITS, poolsize=poolsize, 
         )
         return self
 

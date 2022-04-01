@@ -4,9 +4,13 @@ simulation
         traffic volume * n_links
             how much increase?
         latency per packet
-            includes endhost and router computations
+            includes 
+                endhost signing and unboxing
+                router smartness
         router throughput
             no simulation for this! Just reason. 
+            should be 50% when check_prob = 100%. 
+            91% when check_prob = 10%. 
         traffic volume per verfier server
             realtime verification power. 
     DoS response

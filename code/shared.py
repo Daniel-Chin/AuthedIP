@@ -14,9 +14,10 @@ class Addr:
         nums = '.'.join([format(x, '3') for x in self.bytes])
         return f'[{self.bytes} {nums}]'
     
-    def random(self):
+    def random(self, verbose=True):
         self.bytes = os.urandom(4)
-        print(self)
+        if verbose:
+            print(self)
         return self
     
     def __eq__(self, other):
