@@ -100,7 +100,7 @@ def measure(
         r1, r2, r5, r6, v, 
         Babbler(
             e0, e3.ip_addr, 
-            interval=0, user=None, bulk_data=True, # DoS
+            interval=0, user=None, bulk_data=1024, # DoS
         ), 
     ]
 

@@ -25,7 +25,7 @@ from verifier_server import *
 
 def measure(
     is_authedip, for_how_long, interval, 
-    profile_volume = None, 
+    bulk_data = 1024, 
 ):
     if is_authedip:
         SomeEndhost = AuthedIPEndhost
@@ -55,22 +55,23 @@ def measure(
     v.ip_addr = Addr(b'<v >')
     v.acquireKnownPublicKeys(c.known_public_keys)  # magic
 
-    r1 = SomeRouter(profile_volume)
+    vols = {1: [], 2: [], 5: [], 4: []}
+    r1 = SomeRouter(vols[1])
     r1.ip_addr = Addr(b'<r1>')
     r1.controller_ip = c.ip_addr
     r1.verifier_ip = v.ip_addr
     r1.side = INSIDE
-    r2 = SomeRouter(profile_volume)
+    r2 = SomeRouter(vols[2])
     r2.ip_addr = Addr(b'<r2>')
     r2.controller_ip = c.ip_addr
     r2.verifier_ip = v.ip_addr
     r2.side = INSIDE
-    r4 = SomeRouter(profile_volume)
+    r4 = SomeRouter(vols[4])
     r4.ip_addr = Addr(b'<r4>')
     r4.controller_ip = c.ip_addr
     r4.verifier_ip = v.ip_addr
     r4.side = INSIDE
-    r5 = SomeRouter(profile_volume)
+    r5 = SomeRouter(vols[5])
     r5.ip_addr = Addr(b'<r5>')
     r5.controller_ip = c.ip_addr
     r5.verifier_ip = v.ip_addr
@@ -106,14 +107,8 @@ def measure(
         StoreLatency(e0, latencies), 
         StoreLatency(e3, latencies), 
         r1, r2, r4, r5, v, 
-        Babbler(
-            e0, e3.ip_addr, interval, u0, 
-            profile_volume is not None, 
-        ), 
-        Babbler(
-            e3, e0.ip_addr, interval, u3, 
-            profile_volume is not None, 
-        ), 
+        Babbler(e0, e3.ip_addr, interval, u0, bulk_data), 
+        Babbler(e3, e0.ip_addr, interval, u3, bulk_data), 
     ]
 
     try:
@@ -124,39 +119,51 @@ def measure(
         for thread in threads:
             thread.go_on = False
     
-    return latencies
+    return (
+        latencies, 
+        {k : sum(v) / 1024 for (k, v) in vols.items()}, 
+    )
 
 def main():
     DURATION = 5
-    interval = .02
+    interval = .05
     with InitRendezvous():
         # print('warming up...')
         # measure(False, 1)
         # sleep(1.1)
         print(f'{DURATION=} seconds')
         print('measuring ip...')
-        volume = []
-        ip       = measure(False, DURATION, interval, volume)
-        ip_vol = sum(volume)
+        ip_lat, ip_vol = measure(False, DURATION, interval)
         sleep(1.1)
         print('measuring authedip...')
-        volume.clear()
-        authedip = measure(True , DURATION, interval, volume)
-        au_vol = sum(volume)
+        au_lat, au_vol = measure(True , DURATION, interval)
         sleep(1.1)
     print()
-    print('sample size:', len(ip), len(authedip))
+    print('sample size:', len(ip_lat), len(au_lat))
 
-    print(
-        'ip volume:', ip_vol, 
-        'authedip volume:', au_vol, 
-        'ratio:', format(au_vol / ip_vol, '.1%'), 
-    )
+    overall_ip = 0
+    overall_au = 0
+    for k in (1, 2, 4, 5):
+        overall_ip += ip_vol[k]
+        overall_au += au_vol[k]
+        try:
+            ratio = format(au_vol[k] / ip_vol[k], '.1%')
+        except ZeroDivisionError:
+            ratio = 'NaN'
+        print(
+            f'r{k}\n', ' ', 
+            '      ip volume:', format(ip_vol[k], '.3f'), 'KB', 
+            'authedip volume:', format(au_vol[k], '.3f'), 'KB', 
+            'ratio:', ratio, 
+        )
+    print('overall ratio:', format(
+        overall_au / overall_ip, '.1%', 
+    ))
 
     CUTOFF = .01
-    ip       = [x * 1000 for x in ip       if x < CUTOFF]
-    authedip = [x * 1000 for x in authedip if x < CUTOFF]
-    merged = sorted(ip + authedip)
+    ip_lat = [x * 1000 for x in ip_lat if x < CUTOFF]
+    au_lat = [x * 1000 for x in au_lat if x < CUTOFF]
+    merged = sorted(ip_lat + au_lat)
     min_, max_ = merged[1], merged[-2]
     params = {
         'bins': round((max_ - min_) / .1), 
@@ -164,11 +171,11 @@ def main():
         # 'density': True, 
     }
     plt.hist(
-        authedip, fc=(0, 0, 1, .5), label='authedip', 
+        au_lat, fc=(0, 0, 1, .5), label='AuthedIP', 
         **params, 
     )
     plt.hist(
-        ip,       fc=(1, 0, 0, .5), label='ip', 
+        ip_lat, fc=(1, 0, 0, .5), label='IP', 
         **params, 
     )
     plt.legend()

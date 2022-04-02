@@ -115,7 +115,7 @@ class Drain(LoopThread):
 class Babbler(LoopThread):
     def __init__(
         self, endhost: Endhost, to_who: Addr, 
-        interval = 1, user = None, bulk_data = False, 
+        interval = 1, user = None, bulk_data = 0, 
     ) -> None:
         super().__init__('babbler')
 
@@ -129,8 +129,7 @@ class Babbler(LoopThread):
     
     def loop(self):
         content = str(perf_counter()).encode()
-        if self.bulk_data:
-            content += b'\n' + urandom(256)
+        content += b'\n' + urandom(self.bulk_data)
         self.endhost.send(
             self.to_who, 
             content, 

@@ -94,6 +94,10 @@ class AuthedIPRouter(Router):
     def __repr__(self):
         return f'<Router {self.ip_addr}>'
     
+    def start(self, *a, **kw):
+        self.name = repr(self)
+        super().start(*a, **kw)
+    
     def checkProbability(self, sus):
         return BASE_CHECK_PROBABILITY * (1 + sus * .1)
     
