@@ -130,14 +130,14 @@ def main():
     with InitRendezvous():
         # print('warming up...')
         # measure(False, 1)
-        # sleep(1.1)
+        # sleep(SHUTDOWN_TIME + .1)
         print(f'{DURATION=} seconds')
         print('measuring ip...')
         ip_lat, ip_vol = measure(False, DURATION, interval)
-        sleep(1.1)
+        sleep(SHUTDOWN_TIME + .1)
         print('measuring authedip...')
         au_lat, au_vol = measure(True , DURATION, interval)
-        sleep(1.1)
+        sleep(SHUTDOWN_TIME + .1)
     print()
     print('sample size:', len(ip_lat), len(au_lat))
 
