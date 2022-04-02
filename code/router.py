@@ -147,6 +147,7 @@ class AuthedIPRouter(Router):
             print(self, 'entered verify-then-forward mode.')
 
     def loop(self):
+        # weighted round robin
         for _ in range(16):
             if not self.go_on:
                 break
